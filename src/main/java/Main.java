@@ -27,7 +27,7 @@ public class Main {
   public static boolean matchPattern(String inputLine, String pattern) {
     if (pattern.length() == 1) {
       return inputLine.contains(pattern);
-    } else if (pattern.contains("//d")) {
+    } else if (pattern.equals("\\d")) {
       return inputLine.chars().anyMatch(Character::isDigit);
     } else {
       throw new RuntimeException("Unhandled pattern: " + pattern);
