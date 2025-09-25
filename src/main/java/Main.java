@@ -26,9 +26,13 @@ public class Main {
 
   public static boolean matchPattern(String inputLine, String pattern) {
     if (pattern.length() == 1) {
-      return inputLine.contains(pattern);
-    } else if (pattern.equals("\\d")) {
+      return inputLine.contains(pattern); 
+    } else if (pattern.equalsIgnoreCase("\\d")) {
       return inputLine.chars().anyMatch(Character::isDigit);
+    } else if (pattern.equalsIgnoreCase("\\w")) {
+      return inputLine.chars().anyMatch(ch ->
+        Character.isLetterOrDigit(ch) || ch == '_'
+      );
     } else {
       throw new RuntimeException("Unhandled pattern: " + pattern);
     }
