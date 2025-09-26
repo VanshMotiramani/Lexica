@@ -26,16 +26,20 @@ public class Main {
 
   public static boolean matchPattern(String inputLine, String pattern) {
     if (pattern.length() == 1) {
-      return inputLine.contains(pattern); 
+        return inputLine.contains(pattern); 
     } else if (pattern.equalsIgnoreCase("\\d")) {
-      return inputLine.chars().anyMatch(Character::isDigit);
+        return inputLine.chars().anyMatch(Character::isDigit);
     } else if (pattern.equalsIgnoreCase("\\w")) {
-      return inputLine.chars().anyMatch(ch -> Character.isLetterOrDigit(ch) || ch == '_');
+        return inputLine.chars().anyMatch(ch -> Character.isLetterOrDigit(ch) || ch == '_');
     } else if (pattern.startsWith("[") && pattern.endsWith("]")) {
-      String chars = pattern.substring(1, pattern.length() - 1);
+        String chars = pattern.substring(1, pattern.length() - 1);
 
       return inputLine.chars().anyMatch(ch -> chars.indexOf(ch) >= 0);
-    }else {
+    } else if(pattern.startsWith("[^") && pattern.endsWith("]")) {
+      String chars = pattern.substring(2, pattern.length() - 1);
+
+      return inputLine.chars().anyMatch(ch -> chars.indexOf(ch) == -1);
+    } else {
       throw new RuntimeException("Unhandled pattern: " + pattern);
     }
   }
