@@ -31,14 +31,14 @@ public class Main {
         return inputLine.chars().anyMatch(Character::isDigit);
     } else if (pattern.equalsIgnoreCase("\\w")) {
         return inputLine.chars().anyMatch(ch -> Character.isLetterOrDigit(ch) || ch == '_');
-    } else if (pattern.startsWith("[") && pattern.endsWith("]")) {
-        String chars = pattern.substring(1, pattern.length() - 1);
-
-      return inputLine.chars().anyMatch(ch -> chars.indexOf(ch) >= 0);
     } else if(pattern.startsWith("[^") && pattern.endsWith("]")) {
       String chars = pattern.substring(2, pattern.length() - 1);
 
       return inputLine.chars().anyMatch(ch -> chars.indexOf(ch) == -1);
+    } else if (pattern.startsWith("[") && pattern.endsWith("]")) {
+        String chars = pattern.substring(1, pattern.length() - 1);
+
+      return inputLine.chars().anyMatch(ch -> chars.indexOf(ch) >= 0);
     } else {
       throw new RuntimeException("Unhandled pattern: " + pattern);
     }
