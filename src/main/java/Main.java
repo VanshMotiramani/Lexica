@@ -65,8 +65,11 @@ public class Main {
     }
 
     int nextIndex = index + token.length();
-    if (nextIndex < pattern.length() && pattern.charAt(nextIndex) == '+')
-      token += '+';
+    if (nextIndex < pattern.length()) {
+      char nextChar = pattern.charAt(nextIndex);
+      if (nextChar == '+' || nextChar == '?')
+        token += nextChar;
+    }
     
     return token;
   }
@@ -88,7 +91,7 @@ public class Main {
   }
 
   private static int matchFromRecursive(String input, int inputPos, String pattern, int patternPos) {
-    // Base case: consumed entire pattern
+    // Base case consumed entire pattern
     if (patternPos >= pattern.length()) {
       return inputPos;
     }
@@ -101,19 +104,19 @@ public class Main {
     if (token.endsWith("+")) {
       // Handle + quantifier with backtracking
       String baseToken = token.substring(0, token.length() - 1);
-      
+
       // Must match at least once
       if (inputPos >= input.length() || !matchSingle(input.charAt(inputPos), baseToken)) {
         return -1;
       }
-      
-      // Find maximum possible matches
+
+      // maximum possible matches
       int maxPos = inputPos + 1;
       while (maxPos < input.length() && matchSingle(input.charAt(maxPos), baseToken)) {
         maxPos++;
       }
-      
-      // Try from longest match to shortest (greedy with backtracking)
+
+      // from longest match to shortest (greedy with backtracking)
       for (int endPos = maxPos; endPos > inputPos; endPos--) {
         int result = matchFromRecursive(input, endPos, pattern, patternPos + token.length());
         if (result != -1) {
@@ -121,13 +124,25 @@ public class Main {
         }
       }
       return -1;
-      
+
+    } else if (token.endsWith("?")) {
+      String baseToken = token.substring(0, token.length() - 1);
+      if (inputPos < input.length() && matchSingle(input.charAt(inputPos), baseToken)) {
+        int result = matchFromRecursive(input, inputPos + 1, pattern, patternPos + token.length());
+        if (result != -1) {
+          return result;
+        }
+      }
+
+      return matchFromRecursive(input, inputPos, pattern, patternPos + token.length());
+
     } else {
       // Regular token - must match exactly once
       if (inputPos >= input.length() || !matchSingle(input.charAt(inputPos), token)) {
         return -1;
       }
       return matchFromRecursive(input, inputPos + 1, pattern, patternPos + token.length());
+      
     }
   }
 }
