@@ -1,4 +1,4 @@
-import java.io.IOException;
+
 import java.util.Scanner;
 
 public class Main {
@@ -25,13 +25,18 @@ public class Main {
   }
 
   public static boolean matchPattern(String inputLine, String pattern) {
-    for (int start = 0; start <= inputLine.length(); start++) {
-      if (matchFrom(inputLine, start, pattern)) {
-        return true;
-      }
-    }  
+    if (pattern.startsWith("^")) {
+        String stripped = pattern.substring(1);
+        return matchFrom(inputLine, 0, pattern);
+    } else {
+        for (int start = 0; start <= inputLine.length(); start++) {
+        if (matchFrom(inputLine, start, pattern)) {
+          return true;
+        }
+      }  
 
-    return false;
+      return false;
+    }
   }
   
   private static String nextToken(String pattern, int index) {
