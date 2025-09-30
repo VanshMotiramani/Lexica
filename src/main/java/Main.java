@@ -25,10 +25,16 @@ public class Main {
   }
 
   public static boolean matchPattern(String inputLine, String pattern) {
-    if (pattern.startsWith("^")) {
+    boolean startsWithAnchor = pattern.startsWith("^");
+    boolean endsWithAnchor = pattern.endsWith("$");
+
+    if (startsWithAnchor && endsWithAnchor) {
+      String stripped = pattern.substring(1, pattern.length() - 1);
+      return matchFrom(inputLine, 0, pattern) && stripped.length() == inputLine.length();
+    }else if (startsWithAnchor) {
       String stripped = pattern.substring(1);
       return matchFrom(inputLine, 0, stripped);
-    } else if (pattern.endsWith("$")) {
+    } else if (endsWithAnchor) {
       String stripped = pattern.substring(0, pattern.length() - 1);
       return matchEnding(inputLine, stripped);
     } else {
