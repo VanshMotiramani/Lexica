@@ -25,22 +25,50 @@ public class Main {
   }
 
   public static boolean matchPattern(String inputLine, String pattern) {
-    if (pattern.length() == 1) {
-        return inputLine.contains(pattern); 
-    } else if (pattern.equalsIgnoreCase("\\d")) {
-        return inputLine.chars().anyMatch(Character::isDigit);
-    } else if (pattern.equalsIgnoreCase("\\w")) {
-        return inputLine.chars().anyMatch(ch -> Character.isLetterOrDigit(ch) || ch == '_');
-    } else if(pattern.startsWith("[^") && pattern.endsWith("]")) {
-      String chars = pattern.substring(2, pattern.length() - 1);
+    int i = 0;
+    int j = 0;
 
-      return inputLine.chars().anyMatch(ch -> chars.indexOf(ch) == -1);
-    } else if (pattern.startsWith("[") && pattern.endsWith("]")) {
-        String chars = pattern.substring(1, pattern.length() - 1);
+    while (i < inputLine.length() && j < pattern.length()) {
+      String token = nextToken(pattern, j);
+      if (!matchToken(inputLine.charAt(i), token)) {
+        return false;
+      }
 
-      return inputLine.chars().anyMatch(ch -> chars.indexOf(ch) >= 0);
+      i++;
+      j += token.length();
+    }
+
+    return i == inputLine.length() && j == pattern.length();
+  }
+
+  private static String nextToken(String pattern, int index) {
+    char c = pattern.charAt(index);
+    if (c == '\\') {
+      // escape sequence \d or \w
+      return pattern.substring(index, index + 2);
+    } else if (c == '[') {
+      int close = pattern.indexOf(']', index);
+      return pattern.substring(index, close + 1);
     } else {
-      throw new RuntimeException("Unhandled pattern: " + pattern);
+      //literal char
+      return Character.toString(c);
     }
   }
+
+  private static boolean matchToken(char ch, String token) {
+    if (token.equals("\\d")) {
+      return Character.isDigit(ch);
+    } else if (token.equals("\\w")) {
+      return Character.isLetterOrDigit(ch) || ch == '_';
+    } else if (token.startsWith("[^") && token.endsWith("]")) {
+      String chars = token.substring(2, token.length() - 1);
+      return chars.indexOf(ch) == -1;
+    } else if (token.startsWith("[") && token.endsWith("]")) {
+      String chars = token.substring(1, token.length() - 1);
+      return chars.indexOf(ch) >= 0;
+    } else {
+      return ch == token.charAt(0);
+    }
+  }
+
 }
