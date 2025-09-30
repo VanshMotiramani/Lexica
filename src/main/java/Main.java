@@ -64,8 +64,12 @@ public class Main {
   // }
   
   private static String nextToken(String pattern, int index) {
+    if (index >= pattern.length())
+      return "";
+
     char c = pattern.charAt(index);
     String token;
+
     if (c == '\\') {
       // escape sequence \d or \w
       token = pattern.substring(index, index + 2);
@@ -77,9 +81,10 @@ public class Main {
       token = Character.toString(c);
     }
 
-    if (index + token.length() < pattern.length() && pattern.charAt(index + token.length()) == '+') {
+    int nextIndex = index + token.length();
+    if (nextIndex < pattern.length() && pattern.charAt(nextIndex) == '+')
       token += '+';
-    }
+    
     return token;
   }
 
@@ -96,11 +101,8 @@ public class Main {
       if (!oneOrMore) break;
     }
 
-    if (oneOrMore)  {
-      if (count == 0) return -1;
-    } else {
-      if (count == 0) return -1;
-    }
+    if (count == 0)
+      return -1;
 
     return i;
   }
@@ -124,11 +126,16 @@ public class Main {
   private static int matchFrom(String input, int start, String pattern) {
     int i = start;
     int j = 0;
+
     while (j < pattern.length()) {
       String token = nextToken(pattern, j);
+      if (token.isEmpty())
+        break;
+
       int newPos = matchTokenAndConsume(input, i, token);
       if (newPos == -1)
         return -1;
+
       i = newPos;
       j += token.length();
     }
