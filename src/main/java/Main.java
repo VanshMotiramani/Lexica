@@ -26,17 +26,27 @@ public class Main {
 
   public static boolean matchPattern(String inputLine, String pattern) {
     if (pattern.startsWith("^")) {
-        String stripped = pattern.substring(1);
-        return matchFrom(inputLine, 0, stripped);
+      String stripped = pattern.substring(1);
+      return matchFrom(inputLine, 0, stripped);
+    } else if (pattern.endsWith("$")) {
+      String stripped = pattern.substring(0, pattern.length() - 1);
+      return matchEnding(inputLine, stripped);
     } else {
-        for (int start = 0; start <= inputLine.length(); start++) {
+      for (int start = 0; start <= inputLine.length(); start++) {
         if (matchFrom(inputLine, start, pattern)) {
           return true;
         }
-      }  
+      }
 
       return false;
     }
+  }
+  
+  private static boolean matchEnding(String input, String pattern) {
+    int start = input.length() - pattern.length();
+    if (start < 0)
+      return false;
+    return matchFrom(input, start, pattern);
   }
   
   private static String nextToken(String pattern, int index) {
