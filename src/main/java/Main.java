@@ -38,11 +38,13 @@ public class Main {
       return consumed != -1;
     } else if (endsWithAnchor) {
       String stripped = pattern.substring(0, pattern.length() - 1);
-      int start = inputLine.length() - stripped.length();
-      if (start < 0)
-        return false;
-      int consumed = matchFrom(inputLine, start, stripped);
-      return consumed == inputLine.length();
+      for (int start = 0; start <= inputLine.length(); start++) {
+        int consumed = matchFrom(inputLine, start, stripped);
+        if (consumed == inputLine.length()) {
+          return true;
+        }
+      }
+      return false;
     } else {
       for (int start = 0; start <= inputLine.length(); start++) {
         int consumed = matchFrom(inputLine, start, pattern);
@@ -132,14 +134,21 @@ public class Main {
       if (token.isEmpty())
         break;
 
+      System.err.println("Pattern pos " + j + ": token='" + token + "', input pos " + i + ", remaining input: '"
+          + input.substring(i) + "'");
+
       int newPos = matchTokenAndConsume(input, i, token);
-      if (newPos == -1)
+      if (newPos == -1) {
+        System.err.println("Failed to match token '" + token + "' at input position " + i);
         return -1;
+      }
 
       i = newPos;
       j += token.length();
     }
     
+    System.err.println("Successfully matched, consumed " + (i - start) + " characters");
+
     return i;
   }
 
