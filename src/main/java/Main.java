@@ -27,7 +27,7 @@ public class Main {
   public static boolean matchPattern(String inputLine, String pattern) {
     if (pattern.startsWith("^")) {
         String stripped = pattern.substring(1);
-        return matchFrom(inputLine, 0, pattern);
+        return matchFrom(inputLine, 0, stripped);
     } else {
         for (int start = 0; start <= inputLine.length(); start++) {
         if (matchFrom(inputLine, start, pattern)) {
