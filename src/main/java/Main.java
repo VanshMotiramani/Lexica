@@ -57,19 +57,47 @@ public class Main {
   
   private static String nextToken(String pattern, int index) {
     char c = pattern.charAt(index);
+    String token;
     if (c == '\\') {
       // escape sequence \d or \w
-      return pattern.substring(index, index + 2);
+      token = pattern.substring(index, index + 2);
     } else if (c == '[') {
       int close = pattern.indexOf(']', index);
-      return pattern.substring(index, close + 1);
+      token = pattern.substring(index, close + 1);
     } else {
       //literal char
-      return Character.toString(c);
+      token = Character.toString(c);
     }
+
+    if (index + token.length() < pattern.length() && pattern.charAt(index + token.length()) == '+') {
+      token += '+';
+    }
+    return token;
   }
 
-  private static boolean matchToken(char ch, String token) {
+  private static int matchTokenAndConsume(String input, int pos, String token) {
+    boolean oneOrMore = token.endsWith("+");
+    String baseToken = oneOrMore ? token.substring(0, token.length() -1) : token;
+
+    int i=pos;
+    int count = 0;
+
+    while(i < input.length() && matchSingle(input.charAt(i), baseToken)) {
+      i++;
+      count++;
+      if (!oneOrMore) break;
+    }
+
+    if (oneOrMore)  {
+      if (count == 0) return -1;
+    } else {
+      if (count == 0) return -1;
+    }
+
+    return i;
+  }
+
+  private static boolean matchSingle(char ch, String token) {
     if (token.equals("\\d")) {
       return Character.isDigit(ch);
     } else if (token.equals("\\w")) {
@@ -88,17 +116,16 @@ public class Main {
   private static boolean matchFrom(String input, int start, String pattern) {
     int i = start;
     int j = 0;
-    while (i < input.length() && j < pattern.length()) {
+    while (j < pattern.length()) {
       String token = nextToken(pattern, j);
-      if (!matchToken(input.charAt(i), token)) {
+      int newPos = matchTokenAndConsume(input, i, token);
+      if (newPos == -1)
         return false;
-      }
-
       i++;
       j += token.length();
     }
     
-    return j == pattern.length();
+    return true;
   }
 
 }
