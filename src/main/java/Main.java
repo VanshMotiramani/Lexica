@@ -75,7 +75,9 @@ public class Main {
   }
 
   private static boolean matchSingle(char ch, String token) {
-    if (token.equals("\\d")) {
+    if (token.equals(".")) {
+      return true;
+    } else if (token.equals("\\d")) {
       return Character.isDigit(ch);
     } else if (token.equals("\\w")) {
       return Character.isLetterOrDigit(ch) || ch == '_';
@@ -142,7 +144,7 @@ public class Main {
         return -1;
       }
       return matchFromRecursive(input, inputPos + 1, pattern, patternPos + token.length());
-      
+
     }
   }
 }
