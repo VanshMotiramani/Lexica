@@ -121,7 +121,7 @@ public class Main {
       int newPos = matchTokenAndConsume(input, i, token);
       if (newPos == -1)
         return false;
-      i++;
+      i = newPos;
       j += token.length();
     }
     
