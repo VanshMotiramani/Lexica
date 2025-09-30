@@ -25,22 +25,15 @@ public class Main {
   }
 
   public static boolean matchPattern(String inputLine, String pattern) {
-    int i = 0;
-    int j = 0;
-
-    while (i < inputLine.length() && j < pattern.length()) {
-      String token = nextToken(pattern, j);
-      if (!matchToken(inputLine.charAt(i), token)) {
-        return false;
+    for (int start = 0; start <= inputLine.length(); start++) {
+      if (matchFrom(inputLine, start, pattern)) {
+        return true;
       }
+    }  
 
-      i++;
-      j += token.length();
-    }
-
-    return i == inputLine.length() && j == pattern.length();
+    return false;
   }
-
+  
   private static String nextToken(String pattern, int index) {
     char c = pattern.charAt(index);
     if (c == '\\') {
@@ -69,6 +62,22 @@ public class Main {
     } else {
       return ch == token.charAt(0);
     }
+  }
+
+  private static boolean matchFrom(String input, int start, String pattern) {
+    int i = start;
+    int j = 0;
+    while (i < input.length() && j < pattern.length()) {
+      String token = nextToken(pattern, j);
+      if (!matchToken(input.charAt(i), token)) {
+        return false;
+      }
+
+      i++;
+      j += token.length();
+    }
+    
+    return j == pattern.length();
   }
 
 }
