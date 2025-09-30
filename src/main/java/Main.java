@@ -1,4 +1,6 @@
 import java.util.Scanner;
+import java.util.List;
+import java.util.ArrayList;
 
 public class Main {
   public static void main(String[] args){
@@ -60,6 +62,18 @@ public class Main {
     } else if (c == '[') {
       int close = pattern.indexOf(']', index);
       token = pattern.substring(index, close + 1);
+    } else if (c == '(') {
+      // group handling 
+      int depth = 1;
+      int close = index + 1;
+      while (close < pattern.length() && depth > 0) {
+        if (pattern.charAt(close) == '(')
+          depth++;
+        else if (pattern.charAt(close) == ')')
+          depth--;
+        close++;
+      }
+      token = pattern.substring(index, close);
     } else {
       token = Character.toString(c);
     }
@@ -97,13 +111,82 @@ public class Main {
     if (patternPos >= pattern.length()) {
       return inputPos;
     }
-    
+
     String token = nextToken(pattern, patternPos);
     if (token.isEmpty()) {
       return inputPos;
     }
-    
-    if (token.endsWith("+")) {
+
+    if (token.startsWith("(") && token.endsWith(")")) {
+      String groupContent = token.substring(1, token.length() - 1);
+      String[] alternatives = splitAlternatives(groupContent);
+
+      //each alt
+      for (String alt : alternatives) {
+        int tempResult = matchFromRecursive(input, inputPos, alt, 0);
+        if (tempResult != -1) {
+          int result = matchFromRecursive(input, tempResult, pattern, patternPos + token.length());
+          if (result != -1)
+          return result;
+        }
+
+      }
+      return -1;
+
+    } else if (token.startsWith("(") && (token.endsWith("+") || token.endsWith("?"))) {
+      String quantifier = token.substring(token.length() - 1);
+      String baseGroup = token.substring(0, token.length() - 1);
+      String groupContent = baseGroup.substring(1, baseGroup.length() - 1);
+      String[] alternatives = splitAlternatives(groupContent);
+
+      if (quantifier.equals("+")) {
+        
+        for (String alt : alternatives) {
+          int tempResult = matchFromRecursive(input, inputPos, alt, 0);
+          if (tempResult != -1) {
+            int currentPos = tempResult;
+            List<Integer> matchPositions = new ArrayList<>();
+            matchPositions.add(tempResult);
+
+            while (true) {
+              boolean foundMatch = false;
+              for (String alt2 : alternatives) {
+                int nextResult = matchFromRecursive(input, currentPos, alt2, 0);
+                if (nextResult != -1) {
+                  currentPos = nextResult;
+                  matchPositions.add(currentPos);
+                  foundMatch = true;
+                  break;
+                }
+              }
+
+              if (!foundMatch)
+                break;
+            }
+
+            for (int i = matchPositions.size() - 1; i >= 0; i--) {
+              int result = matchFromRecursive(input, matchPositions.get(i), pattern, patternPos + token.length());
+              if (result != -1)
+                return result;
+            }
+          }
+        }
+        return -1;
+
+      } else if (quantifier.equals("?")) {
+        for (String alt : alternatives) {
+          int tempResult = matchFromRecursive(input, inputPos, alt, 0);
+          if (tempResult != -1) {
+            int result = matchFromRecursive(input, tempResult, pattern, patternPos + token.length());
+            if (result != -1)
+              return result;
+          }
+        }
+        return matchFromRecursive(input, inputPos, pattern, patternPos + token.length());
+      }
+      return -1;
+
+    } else if (token.endsWith("+")) {
       // Handle + quantifier with backtracking
       String baseToken = token.substring(0, token.length() - 1);
 
@@ -146,5 +229,26 @@ public class Main {
       return matchFromRecursive(input, inputPos + 1, pattern, patternPos + token.length());
 
     }
+  }
+  
+  private static String[] splitAlternatives(String groupContent) {
+    java.util.List<String> alternatives = new java.util.ArrayList<>();
+    int depth = 0;
+    int start = 0;
+
+    for (int i = 0; i < groupContent.length(); i++) {
+      char c = groupContent.charAt(i);
+      if (c == '(') {
+        depth++;
+      } else if (c == ')') {
+        depth--;
+      } else if(c == '|' && depth == 0) {
+        alternatives.add(groupContent.substring(start, i));
+        start = i + 1;
+      }
+    }
+    alternatives.add(groupContent.substring(start));
+
+    return alternatives.toArray(new String[0]);
   }
 }
