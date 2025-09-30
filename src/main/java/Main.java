@@ -30,7 +30,7 @@ public class Main {
 
     if (startsWithAnchor && endsWithAnchor) {
       String stripped = pattern.substring(1, pattern.length() - 1);
-      return matchFrom(inputLine, 0, pattern) && stripped.length() == inputLine.length();
+      return matchFrom(inputLine, 0, stripped) && stripped.length() == inputLine.length();
     }else if (startsWithAnchor) {
       String stripped = pattern.substring(1);
       return matchFrom(inputLine, 0, stripped);
