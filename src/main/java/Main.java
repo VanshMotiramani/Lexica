@@ -30,16 +30,24 @@ public class Main {
 
     if (startsWithAnchor && endsWithAnchor) {
       String stripped = pattern.substring(1, pattern.length() - 1);
-      return matchFrom(inputLine, 0, stripped) && stripped.length() == inputLine.length();
+      int consumed = matchFrom(inputLine, 0, stripped);
+      return consumed == inputLine.length();
     }else if (startsWithAnchor) {
       String stripped = pattern.substring(1);
-      return matchFrom(inputLine, 0, stripped);
+      int consumed = matchFrom(inputLine, 0, stripped);
+      return consumed != -1;
     } else if (endsWithAnchor) {
       String stripped = pattern.substring(0, pattern.length() - 1);
-      return matchEnding(inputLine, stripped);
+      int start = inputLine.length() - stripped.length();
+      if (start < 0)
+        return false;
+      int consumed = matchFrom(inputLine, start, stripped);
+      return consumed == inputLine.length();
     } else {
       for (int start = 0; start <= inputLine.length(); start++) {
-        if (matchFrom(inputLine, start, pattern)) {
+        int consumed = matchFrom(inputLine, start, pattern);
+
+        if (consumed != -1) {
           return true;
         }
       }
@@ -48,12 +56,12 @@ public class Main {
     }
   }
   
-  private static boolean matchEnding(String input, String pattern) {
-    int start = input.length() - pattern.length();
-    if (start < 0)
-      return false;
-    return matchFrom(input, start, pattern);
-  }
+  // private static boolean matchEnding(String input, String pattern) {
+  //   int start = input.length() - pattern.length();
+  //   if (start < 0)
+  //     return false;
+  //   return matchFrom(input, start, pattern);
+  // }
   
   private static String nextToken(String pattern, int index) {
     char c = pattern.charAt(index);
@@ -113,19 +121,19 @@ public class Main {
     }
   }
 
-  private static boolean matchFrom(String input, int start, String pattern) {
+  private static int matchFrom(String input, int start, String pattern) {
     int i = start;
     int j = 0;
     while (j < pattern.length()) {
       String token = nextToken(pattern, j);
       int newPos = matchTokenAndConsume(input, i, token);
       if (newPos == -1)
-        return false;
+        return -1;
       i = newPos;
       j += token.length();
     }
     
-    return true;
+    return i;
   }
 
 }
