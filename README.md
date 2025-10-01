@@ -1,4 +1,4 @@
-# Java Regex Engine
+# Lexica Regex Engine
 
 A custom regular expression engine built from scratch in Java, supporting common regex features.
 
