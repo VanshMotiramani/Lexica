@@ -1,6 +1,8 @@
 import java.util.Scanner;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Main {
   public static void main(String[] args){
@@ -26,23 +28,25 @@ public class Main {
     boolean startsWithAnchor = pattern.startsWith("^");
     boolean endsWithAnchor = pattern.endsWith("$");
 
+    Map<Integer, String> capturedGroups = new HashMap<>();
+
     if (startsWithAnchor && endsWithAnchor) {
       String stripped = pattern.substring(1, pattern.length() - 1);
-      return matchFromRecursive(inputLine, 0, stripped, 0) == inputLine.length();
+      return matchFromRecursive(inputLine, 0, stripped, 0, capturedGroups) == inputLine.length();
     } else if (startsWithAnchor) {
       String stripped = pattern.substring(1);
-      return matchFromRecursive(inputLine, 0, stripped, 0) != -1;
+      return matchFromRecursive(inputLine, 0, stripped, 0, capturedGroups) != -1;
     } else if (endsWithAnchor) {
       String stripped = pattern.substring(0, pattern.length() - 1);
       for (int start = 0; start <= inputLine.length(); start++) {
-        if (matchFromRecursive(inputLine, start, stripped, 0) == inputLine.length()) {
+        if (matchFromRecursive(inputLine, start, stripped, 0, capturedGroups) == inputLine.length()) {
           return true;
         }
       }
       return false;
     } else {
       for (int start = 0; start <= inputLine.length(); start++) {
-        if (matchFromRecursive(inputLine, start, pattern, 0) != -1) {
+        if (matchFromRecursive(inputLine, start, pattern, 0, capturedGroups) != -1) {
           return true;
         }
       }
@@ -58,7 +62,11 @@ public class Main {
     String token;
 
     if (c == '\\') {
-      token = pattern.substring(index, index + 2);
+      if (index + 1 < pattern.length() && Character.isDigit(pattern.charAt(index + 1))) {
+        token = pattern.substring(index, index + 2);
+      } else {
+        token = pattern.substring(index, index + 2);
+      } 
     } else if (c == '[') {
       int close = pattern.indexOf(']', index);
       token = pattern.substring(index, close + 1);
@@ -106,7 +114,7 @@ public class Main {
     }
   }
 
-  private static int matchFromRecursive(String input, int inputPos, String pattern, int patternPos) {
+  private static int matchFromRecursive(String input, int inputPos, String pattern, int patternPos, Map<Integer, String> capturedGroups) {
     // Base case consumed entire pattern
     if (patternPos >= pattern.length()) {
       return inputPos;
@@ -117,17 +125,48 @@ public class Main {
       return inputPos;
     }
 
+    if (token.matches("\\\\\\d")) {
+      int groupNum = Integer.parseInt(token.substring(1));
+      String capturedText = capturedGroups.get(groupNum);
+
+      if (capturedText == null) {
+        return -1;
+      }
+
+      if (inputPos + capturedText.length() > input.length()) {
+        return -1;
+      }
+
+      for (int i = 0; i < capturedText.length(); i++) {
+        if (input.charAt(inputPos + i) != capturedText.charAt(i)) {
+          return -1;
+        }
+      }
+
+      return matchFromRecursive(input, inputPos + capturedText.length(), pattern, patternPos + token.length(),
+          capturedGroups);
+    }
+
     if (token.startsWith("(") && token.endsWith(")")) {
       String groupContent = token.substring(1, token.length() - 1);
       String[] alternatives = splitAlternatives(groupContent);
 
       //each alt
       for (String alt : alternatives) {
-        int tempResult = matchFromRecursive(input, inputPos, alt, 0);
+        int startCapture = inputPos;
+
+        Map<Integer, String> tempGroups = new HashMap<>(capturedGroups);
+
+        int tempResult = matchFromRecursive(input, inputPos, alt, 0, tempGroups);
         if (tempResult != -1) {
-          int result = matchFromRecursive(input, tempResult, pattern, patternPos + token.length());
-          if (result != -1)
-          return result;
+          String capturedText = input.substring(startCapture, tempResult);
+          tempGroups.put(1, capturedText);
+
+          int result = matchFromRecursive(input, tempResult, pattern, patternPos + token.length(), tempGroups);
+          if (result != -1) {
+            capturedGroups.putAll(tempGroups);
+            return result;
+          }
         }
 
       }
@@ -142,19 +181,26 @@ public class Main {
       if (quantifier.equals("+")) {
         
         for (String alt : alternatives) {
-          int tempResult = matchFromRecursive(input, inputPos, alt, 0);
+          int startCapture = inputPos;
+          Map<Integer, String> tempGroups = new HashMap<>(capturedGroups);
+
+          int tempResult = matchFromRecursive(input, inputPos, alt, 0, tempGroups);
           if (tempResult != -1) {
             int currentPos = tempResult;
             List<Integer> matchPositions = new ArrayList<>();
+            List<String> capturedTexts = new ArrayList<>();
             matchPositions.add(tempResult);
+            capturedTexts.add(input.substring(startCapture, tempResult));
 
             while (true) {
               boolean foundMatch = false;
+              int nextStart = currentPos;
               for (String alt2 : alternatives) {
-                int nextResult = matchFromRecursive(input, currentPos, alt2, 0);
+                int nextResult = matchFromRecursive(input, currentPos, alt2, 0, tempGroups);
                 if (nextResult != -1) {
                   currentPos = nextResult;
                   matchPositions.add(currentPos);
+                  capturedTexts.add(input.substring(nextStart, nextResult));
                   foundMatch = true;
                   break;
                 }
@@ -165,9 +211,14 @@ public class Main {
             }
 
             for (int i = matchPositions.size() - 1; i >= 0; i--) {
-              int result = matchFromRecursive(input, matchPositions.get(i), pattern, patternPos + token.length());
-              if (result != -1)
+              Map<Integer, String> tryGroups = new HashMap<>(capturedGroups);
+              tryGroups.put(1, input.substring(startCapture, matchPositions.get(i)));
+
+              int result = matchFromRecursive(input, matchPositions.get(i), pattern, patternPos + token.length(), tryGroups);
+              if (result != -1) {
+                capturedGroups.putAll(tryGroups);
                 return result;
+              }
             }
           }
         }
@@ -175,14 +226,20 @@ public class Main {
 
       } else if (quantifier.equals("?")) {
         for (String alt : alternatives) {
-          int tempResult = matchFromRecursive(input, inputPos, alt, 0);
+          int startCapture = inputPos;
+          Map<Integer, String> tempGroups = new HashMap<>(capturedGroups);
+
+          int tempResult = matchFromRecursive(input, inputPos, alt, 0, tempGroups);
           if (tempResult != -1) {
-            int result = matchFromRecursive(input, tempResult, pattern, patternPos + token.length());
-            if (result != -1)
+            tempGroups.put(1, input.substring(startCapture, tempResult));
+            int result = matchFromRecursive(input, tempResult, pattern, patternPos + token.length(), tempGroups);
+            if (result != -1) {
+              capturedGroups.putAll(tempGroups);
               return result;
+            }              
           }
         }
-        return matchFromRecursive(input, inputPos, pattern, patternPos + token.length());
+        return matchFromRecursive(input, inputPos, pattern, patternPos + token.length(), capturedGroups);
       }
       return -1;
 
@@ -203,7 +260,7 @@ public class Main {
 
       // from longest match to shortest (greedy with backtracking)
       for (int endPos = maxPos; endPos > inputPos; endPos--) {
-        int result = matchFromRecursive(input, endPos, pattern, patternPos + token.length());
+        int result = matchFromRecursive(input, endPos, pattern, patternPos + token.length(), capturedGroups);
         if (result != -1) {
           return result;
         }
@@ -213,20 +270,20 @@ public class Main {
     } else if (token.endsWith("?")) {
       String baseToken = token.substring(0, token.length() - 1);
       if (inputPos < input.length() && matchSingle(input.charAt(inputPos), baseToken)) {
-        int result = matchFromRecursive(input, inputPos + 1, pattern, patternPos + token.length());
+        int result = matchFromRecursive(input, inputPos + 1, pattern, patternPos + token.length(), capturedGroups);
         if (result != -1) {
           return result;
         }
       }
 
-      return matchFromRecursive(input, inputPos, pattern, patternPos + token.length());
+      return matchFromRecursive(input, inputPos, pattern, patternPos + token.length(), capturedGroups);
 
     } else {
       // Regular token - must match exactly once
       if (inputPos >= input.length() || !matchSingle(input.charAt(inputPos), token)) {
         return -1;
       }
-      return matchFromRecursive(input, inputPos + 1, pattern, patternPos + token.length());
+      return matchFromRecursive(input, inputPos + 1, pattern, patternPos + token.length(), capturedGroups);
 
     }
   }
