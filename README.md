@@ -1,39 +1,47 @@
-[![progress-banner](https://backend.codecrafters.io/progress/grep/2a6d6beb-3df0-41ac-bd01-094086e61edd)](https://app.codecrafters.io/users/codecrafters-bot?r=2qF)
+# Java Regex Engine
 
-This is a starting point for Java solutions to the
-["Build Your Own grep" Challenge](https://app.codecrafters.io/courses/grep/overview).
+A custom regular expression engine built from scratch in Java, supporting common regex features.
 
-[Regular expressions](https://en.wikipedia.org/wiki/Regular_expression)
-(Regexes, for short) are patterns used to match character combinations in
-strings. [`grep`](https://en.wikipedia.org/wiki/Grep) is a CLI tool for
-searching using Regexes.
+## Features
 
-In this challenge you'll build your own implementation of `grep`. Along the way
-we'll learn about Regex syntax, how parsers/lexers work, and how regular
-expressions are evaluated.
+-  Basic string matching
+-  Anchors (`^` start, `$` end)
+-  Character classes (`\d`, `\w`, `[abc]`, `[^abc]`)
+-  Quantifiers (`+` one or more, `?` zero or one)
+-  Dot metacharacter (`.` matches any character)
+-  Alternation with groups (`(cat|dog)`)
+-  Backreferences (`\1`)
 
-**Note**: If you're viewing this repo on GitHub, head over to
-[codecrafters.io](https://codecrafters.io) to try the challenge.
+## Usage
 
-# Passing the first stage
+```bash
+# Compile the program
+javac src/main/java/Main.java
 
-The entry point for your `grep` implementation is in `src/main/java/Main.java`.
-Study and uncomment the relevant code, and push your changes to pass the first
-stage:
+# Run with a pattern
+echo "cat" | java -cp src/main/java Main -E "cat"
 
-```sh
-git commit -am "pass 1st stage" # any msg
-git push origin master
+# Examples
+echo "hello123" | java -cp src/main/java Main -E "\d+"
+echo "cat and cat" | java -cp src/main/java Main -E "(cat) and \1"
+```
+## Project Structure
+``` 
+├── src/
+│   ├── main/
+│       └── java/
+│           └── Main.java
+├── docs/
+├── README.md
+└── .gitignore
 ```
 
-Time to move on to the next stage!
+## Implementation 
+This regex engine uses:
+   - Recursive descent parsing for pattern matching
+   - Backtracking for quantifiers
+   - HashMap for storing captured groups
+   - Token-based pattern parsing
 
-# Stage 2 & beyond
-
-Note: This section is for stages 2 and beyond.
-
-1. Ensure you have `mvn` installed locally
-1. Run `./your_program.sh` to run your program, which is implemented in
-   `src/main/java/Main.java`.
-1. Commit your changes and run `git push origin master` to submit your solution
-   to CodeCrafters. Test output will be streamed to your terminal.
+# Author
+Vansh Motiramani
