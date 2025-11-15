@@ -56,41 +56,46 @@ public class Main {
   
   private static String nextToken(String pattern, int index) {
     if (index >= pattern.length())
-      return "";
+        return "";
 
     char c = pattern.charAt(index);
     String token;
 
     if (c == '\\') {
-      if (index + 1 < pattern.length() && Character.isDigit(pattern.charAt(index + 1))) {
-        token = pattern.substring(index, index + 2);
-      } else {
-        token = pattern.substring(index, index + 2);
-      } 
+        if (index + 1 < pattern.length()) {
+            char next = pattern.charAt(index + 1);
+            // Handle \d, \w, \1-\9, and escaped special char \.
+            if (Character.isDigit(next) || next == 'd' || next == 'w' || next == '.') {
+                token = pattern.substring(index, index + 2);
+            } else {
+                token = pattern.substring(index, index + 2);
+            }
+        } else {
+            token = "\\";
+        }
     } else if (c == '[') {
-      int close = pattern.indexOf(']', index);
-      token = pattern.substring(index, close + 1);
+        int close = pattern.indexOf(']', index);
+        token = pattern.substring(index, close + 1);
     } else if (c == '(') {
-      // group handling 
-      int depth = 1;
-      int close = index + 1;
-      while (close < pattern.length() && depth > 0) {
-        if (pattern.charAt(close) == '(')
-          depth++;
-        else if (pattern.charAt(close) == ')')
-          depth--;
-        close++;
-      }
-      token = pattern.substring(index, close);
+        int depth = 1;
+        int close = index + 1;
+        while (close < pattern.length() && depth > 0) {
+            if (pattern.charAt(close) == '(')
+                depth++;
+            else if (pattern.charAt(close) == ')')
+                depth--;
+            close++;
+        }
+        token = pattern.substring(index, close);
     } else {
-      token = Character.toString(c);
+        token = Character.toString(c);
     }
 
     int nextIndex = index + token.length();
     if (nextIndex < pattern.length()) {
-      char nextChar = pattern.charAt(nextIndex);
-      if (nextChar == '+' || nextChar == '?')
-        token += nextChar;
+        char nextChar = pattern.charAt(nextIndex);
+        if (nextChar == '+' || nextChar == '?' || nextChar == '*')
+            token += nextChar;
     }
     
     return token;
@@ -98,20 +103,45 @@ public class Main {
 
   private static boolean matchSingle(char ch, String token) {
     if (token.equals(".")) {
-      return true;
+        return true;  // Wildcard - matches anything
+    } else if (token.equals("\\.")) {
+        return ch == '.';  // Escaped dot - matches literal dot
     } else if (token.equals("\\d")) {
-      return Character.isDigit(ch);
+        return Character.isDigit(ch);
     } else if (token.equals("\\w")) {
-      return Character.isLetterOrDigit(ch) || ch == '_';
+        return Character.isLetterOrDigit(ch) || ch == '_';
     } else if (token.startsWith("[^") && token.endsWith("]")) {
-      String chars = token.substring(2, token.length() - 1);
-      return chars.indexOf(ch) == -1;
+        String chars = token.substring(2, token.length() - 1);
+        return !matchCharInClass(ch, chars);
     } else if (token.startsWith("[") && token.endsWith("]")) {
-      String chars = token.substring(1, token.length() - 1);
-      return chars.indexOf(ch) >= 0;
+        String chars = token.substring(1, token.length() - 1);
+        return matchCharInClass(ch, chars);
     } else {
-      return ch == token.charAt(0);
+        return ch == token.charAt(0);
     }
+  }
+  
+  private static boolean matchCharInClass(char ch, String charClass) {
+    int i = 0;
+    while (i < charClass.length()) {
+        // Check for range (e.g., a-z, 0-9, A-Z)
+        if (i + 2 < charClass.length() && charClass.charAt(i + 1) == '-') {
+            char start = charClass.charAt(i);
+            char end = charClass.charAt(i + 2);
+            
+            if (ch >= start && ch <= end) {
+                return true;
+            }
+            i += 3; // Move past the range (e.g., skip 'a', '-', 'z')
+        } else {
+            // Single character
+            if (ch == charClass.charAt(i)) {
+                return true;
+            }
+            i++;
+        }
+    }
+    return false;
   }
 
   private static int matchFromRecursive(String input, int inputPos, String pattern, int patternPos, Map<Integer, String> capturedGroups) {
@@ -267,6 +297,24 @@ public class Main {
       }
       return -1;
 
+    } else if (token.endsWith("*")) {
+      // Handle * quantifier (zero or more)
+      String baseToken = token.substring(0, token.length() - 1);
+
+      // Find maximum possible matches
+      int maxPos = inputPos;
+      while (maxPos < input.length() && matchSingle(input.charAt(maxPos), baseToken)) {
+        maxPos++;
+      }
+
+      // Try from longest match to zero matches (greedy with backtracking)
+      for (int endPos = maxPos; endPos >= inputPos; endPos--) {
+        int result = matchFromRecursive(input, endPos, pattern, patternPos + token.length(), capturedGroups);
+        if (result != -1) {
+          return result;
+        }
+      }
+      return -1;
     } else if (token.endsWith("?")) {
       String baseToken = token.substring(0, token.length() - 1);
       if (inputPos < input.length() && matchSingle(input.charAt(inputPos), baseToken)) {

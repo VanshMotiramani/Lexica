@@ -14,3 +14,13 @@ SimpleTest.java
 codecrafters.yml
 codecrafters.yaml
 your_program.sh
+
+RegexBenchmark.java
+RegexBenchmarkDebug.java
+PerformanceVisulaizer.java
+
+src\main\java\RegexBenchmark.java
+src\main\java\PerformanceVisualizer.java
+
+performance_report.csv
+RESUME_METRICS.txt
